@@ -70,9 +70,6 @@ public class PhotoGalleryFragment extends Fragment {
 
         updateItems();
 
-        Intent intent = PollService.newIntent(getActivity());
-        getActivity().startService(intent);
-
         Handler responseHandler = new Handler();
         mThumbnailDownloader = new ThumbnailDownloader<>(responseHandler);
         mThumbnailDownloader.setThumbnailDownloadListener(new ThumbnailDownloader.ThumbnailDownloadListener<PhotoHolder>() {
@@ -145,6 +142,13 @@ public class PhotoGalleryFragment extends Fragment {
                 searchView.setQuery(QueryPreferences.getStoredQuery(getActivity()), false);
             }
         });
+
+        MenuItem togglePollingItem = menu.findItem(R.id.menu_item_toggle_polling);
+        if (PollService.isServiceAlarmOn(getActivity())){
+            togglePollingItem.setTitle(R.string.stop_pooling);
+        } else {
+            togglePollingItem.setTitle(R.string.start_pooling);
+        }
     }
 
     @Override
@@ -153,6 +157,11 @@ public class PhotoGalleryFragment extends Fragment {
             case R.id.menu_item_clear:
                 QueryPreferences.setStoredQuery(getActivity(), null);
                 updateItems();
+                return true;
+            case R.id.menu_item_toggle_polling:
+                boolean shouldStartAlarm = !PollService.isServiceAlarmOn(getActivity());
+                PollService.setServiceAlarm(getActivity(), shouldStartAlarm);
+                getActivity().invalidateOptionsMenu();
                 return true;
             default:
             return super.onOptionsItemSelected(item);
