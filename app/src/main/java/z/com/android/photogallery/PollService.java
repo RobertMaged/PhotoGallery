@@ -10,8 +10,10 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.os.Build;
+import android.os.Handler;
 import android.os.SystemClock;
 import android.util.Log;
+import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.core.app.AlarmManagerCompat;
@@ -26,6 +28,10 @@ public class PollService extends IntentService {
     private static final String TAG = "PollService";
     //set Interval to 1 min
     private static final long POLL_INTERVAL_MS = TimeUnit.MINUTES.toMillis(15);
+
+    public static final String ACTION_SHOW_NOTIFICATION = "z.com.android.photogallery.SHOW_NOTIFICATION";
+    //make our broadcast private for the app only
+    public static final String PREM_PRIVATE = "z.com.android.photogallery.PRIVATE";
 
     public static Intent newIntent(Context context){
         return new Intent(context, PollService.class);
@@ -44,7 +50,8 @@ public class PollService extends IntentService {
             alarmManager.cancel(pendingIntent);
             pendingIntent.cancel();
         }
-
+        //write to sharedPref. Alarm state (isOn)
+        QueryPreferences.setAlarmOn(context, isOn);
     }
 
     public static boolean isServiceAlarmOn(Context context){
@@ -54,8 +61,10 @@ public class PollService extends IntentService {
         return pendingIntent != null;
     }
 
+    Handler mHandler;
     public PollService() {
         super(TAG);
+        mHandler = new Handler();
     }
 
     @Override
@@ -81,33 +90,37 @@ public class PollService extends IntentService {
         String resultId = items.get(0).getId();
         if (resultId.equals(lastResultId)){
             Log.i(TAG, "Got an old result: " + resultId);
+            mHandler.post( ()-> Toast.makeText(this, "Alarm is on but Got an old result", Toast.LENGTH_LONG).show());
         } else {
             Log.i(TAG, "Got a new result: " + resultId);
-
+            mHandler.post( ()-> Toast.makeText(this, "Alarm is on, Got a new result", Toast.LENGTH_LONG).show());
             Intent i = PhotoGalleryActivity.newIntent(this);
             PendingIntent pi = PendingIntent.getActivity(this, 0, i, 0);
 
 
-            Notification notification;
+
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 NotificationChannel channel = new NotificationChannel("info", "test", NotificationManager.IMPORTANCE_DEFAULT);
+                channel.setDescription("description");
 
-                 notification = new Notification.Builder(this , channel.getId())
+                NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+                notificationManager.createNotificationChannel(channel);
+            }
+                 NotificationCompat.Builder notification = new NotificationCompat.Builder(this, "info")
                         .setTicker(getResources().getString(R.string.new_pictures_title))
                         .setSmallIcon(android.R.drawable.ic_menu_report_image)
                         .setContentTitle(getResources().getString(R.string.new_pictures_title))
                         .setContentText(getResources().getString(R.string.new_pictures_text))
                         .setContentIntent(pi)
-                        .setAutoCancel(true)
-                        .build();
-
-                //NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
-                NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-                notificationManager.createNotificationChannel(channel);
-                notificationManager.notify(0,notification);
-            }
+                        .setAutoCancel(true);
 
 
+                NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
+                notificationManager.notify(0,notification.build());
+
+            //now send broadcat every time new search result are available
+            //the receiver who only use our(PREM_PRIVATE) permission can receive it
+            sendBroadcast(new Intent(ACTION_SHOW_NOTIFICATION), PREM_PRIVATE);
         }
 
         QueryPreferences.setLastResultId(this, resultId);
