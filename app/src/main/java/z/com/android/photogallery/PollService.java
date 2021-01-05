@@ -1,5 +1,6 @@
 package z.com.android.photogallery;
 
+import android.app.Activity;
 import android.app.AlarmManager;
 import android.app.IntentService;
 import android.app.Notification;
@@ -32,6 +33,8 @@ public class PollService extends IntentService {
     public static final String ACTION_SHOW_NOTIFICATION = "z.com.android.photogallery.SHOW_NOTIFICATION";
     //make our broadcast private for the app only
     public static final String PREM_PRIVATE = "z.com.android.photogallery.PRIVATE";
+    public static final String REQUEST_CODE = "REQUEST_cODE";
+    public static final String NOTIFICATION = "NOTIFICATION";
 
     public static Intent newIntent(Context context){
         return new Intent(context, PollService.class);
@@ -105,6 +108,7 @@ public class PollService extends IntentService {
 
                 NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
                 notificationManager.createNotificationChannel(channel);
+
             }
                  NotificationCompat.Builder notification = new NotificationCompat.Builder(this, "info")
                         .setTicker(getResources().getString(R.string.new_pictures_title))
@@ -115,15 +119,24 @@ public class PollService extends IntentService {
                         .setAutoCancel(true);
 
 
-                NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
-                notificationManager.notify(0,notification.build());
+//                NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
+//                notificationManager.notify(0,notification.build());
 
-            //now send broadcat every time new search result are available
-            //the receiver who only use our(PREM_PRIVATE) permission can receive it
-            sendBroadcast(new Intent(ACTION_SHOW_NOTIFICATION), PREM_PRIVATE);
+            ////now send broadcat every time new search result are available
+            ////the receiver who only use our(PREM_PRIVATE) permission can receive it
+            //sendBroadcast(new Intent(ACTION_SHOW_NOTIFICATION), PREM_PRIVATE);
+
+            showBackGroundNotification(0, notification);
         }
 
         QueryPreferences.setLastResultId(this, resultId);
+    }
+
+    private void showBackGroundNotification(int requestCode, NotificationCompat.Builder notification) {
+        Intent i = new Intent(ACTION_SHOW_NOTIFICATION);
+        i.putExtra(REQUEST_CODE, requestCode);
+        i.putExtra(NOTIFICATION, notification.build());
+        sendOrderedBroadcast(i, PREM_PRIVATE, null, null, Activity.RESULT_OK, null, null);
     }
 
 

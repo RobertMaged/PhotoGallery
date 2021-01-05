@@ -1,5 +1,6 @@
 package z.com.android.photogallery;
 
+import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -17,7 +18,11 @@ public abstract class VisibleFragment extends Fragment {
         @Override
         public void onReceive(Context context, Intent intent) {
             Toast.makeText(getActivity(), "got a broadcast" + intent.getAction(), Toast.LENGTH_LONG).show();
-            Log.i(TAG, "mOnShowNotificationOnReceive: " + intent.getAction());
+
+            //if we receive this we are visible, so cancel
+            //the notification
+            Log.i(TAG, "canceling notification");
+            setResultCode(Activity.RESULT_CANCELED);
         }
     };
 

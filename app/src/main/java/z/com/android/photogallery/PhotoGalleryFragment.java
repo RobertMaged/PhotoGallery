@@ -181,17 +181,29 @@ public class PhotoGalleryFragment extends VisibleFragment {
 
 
 
-    private class PhotoHolder extends RecyclerView.ViewHolder{
+    private class PhotoHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
         private ImageView mImageView;
+        private GalleryItem mGalleryItem;
 
         public PhotoHolder(@NonNull View itemView) {
             super(itemView);
 
             mImageView = (ImageView) itemView.findViewById(R.id.item_image_view);
+            itemView.setOnClickListener(this);
         }
 
         public void bindDrawable(Drawable drawable){
             mImageView.setImageDrawable(drawable);
+        }
+
+        public void bindGalleryItem(GalleryItem galleryItem){
+            mGalleryItem = galleryItem;
+        }
+
+        @Override
+        public void onClick(View v) {
+            Intent i = PhotoPageActivity.newIntent(getActivity(), mGalleryItem.getPhotoPageUri());
+            startActivity(i);
         }
     }
 
@@ -217,6 +229,7 @@ public class PhotoGalleryFragment extends VisibleFragment {
             GalleryItem galleryItem = mGalleryItems.get(position);
             Drawable drawable = ResourcesCompat.getDrawable(getResources(), R.drawable.ic_loading_image, null);
             holder.bindDrawable(drawable);
+            holder.bindGalleryItem(galleryItem);
             mThumbnailDownloader.queueThumbnail(holder, galleryItem.getUrl());
         }
 
