@@ -1,5 +1,6 @@
 package z.com.android.photogallery;
 
+import android.content.res.Resources;
 import android.net.Uri;
 import android.util.Log;
 import android.view.accessibility.AccessibilityNodeInfo;
@@ -20,7 +21,7 @@ public class FlickrFetcher {
 
     private static final String TAG = "FlickerFetcher";
 
-    private static final String API_KEY = "99a0352e512810def59f2ea2d96dbbb0";
+    private static final String API_KEY = BuildConfig.FlickerApiKey;
     private static final String FETCH_RECENT_METHOD = "flickr.photos.getRecent";
     private static final String SEARCH_METHOD = "flickr.photos.search";
     private static final Uri ENDPOINT = Uri.parse("https://www.flickr.com/services/rest/")
